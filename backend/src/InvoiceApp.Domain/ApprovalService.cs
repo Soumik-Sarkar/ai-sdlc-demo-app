@@ -2,7 +2,7 @@ namespace InvoiceApp.Domain;
 
 /// <summary>
 /// Moves an invoice through its lifecycle: Draft -> PendingApproval -> Approved or Rejected.
-/// One invoice at a time, decided as a whole by a single approver.
+/// One invoice at a time. Who may approve, and up to what amount, is decided by <see cref="ApprovalPolicy"/>.
 /// </summary>
 public class ApprovalService
 {
@@ -28,10 +28,11 @@ public class ApprovalService
         return invoice;
     }
 
-    public Invoice Approve(string invoiceId, string approver)
+    public Invoice Approve(string invoiceId, string approver, string role)
     {
         var invoice = Find(invoiceId);
         EnsurePending(invoice);
+        ApprovalPolicy.EnsureMayApprove(invoice, approver, role);
 
         invoice.Status = InvoiceStatus.Approved;
         invoice.DecidedBy = approver;
