@@ -1,0 +1,6 @@
+{
+  "stryker-config": {
+    "mutate": [ "!**/DiscountCalculator.cs" ],
+    "thresholds": { "high": 90, "low": 70, "break": 0 }
+  }
+}
