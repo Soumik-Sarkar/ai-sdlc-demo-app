@@ -32,7 +32,15 @@ public class ApprovalService
     {
         var invoice = Find(invoiceId);
         EnsurePending(invoice);
-        ApprovalPolicy.EnsureMayApprove(invoice, approver, role);
+        var outcome = ApprovalPolicy.Evaluate(invoice, approver, role);
+
+        if (outcome == ApprovalOutcome.FirstOfTwo)
+        {
+            invoice.FirstApprovedBy = approver;
+            invoice.FirstApprovedAt = DateTime.UtcNow;
+            _repository.Update(invoice);
+            return invoice;
+        }
 
         invoice.Status = InvoiceStatus.Approved;
         invoice.DecidedBy = approver;

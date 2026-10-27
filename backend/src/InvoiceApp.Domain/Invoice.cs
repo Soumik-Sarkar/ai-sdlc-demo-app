@@ -7,6 +7,9 @@ public class Invoice
     public decimal Amount { get; set; }
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Draft;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Set when the first of two required approvals is given (invoices above the Director limit).</summary>
+    public string? FirstApprovedBy { get; set; }
+    public DateTime? FirstApprovedAt { get; set; }
     public string? DecidedBy { get; set; }
     public DateTime? DecidedAt { get; set; }
     public string? DecisionNote { get; set; }

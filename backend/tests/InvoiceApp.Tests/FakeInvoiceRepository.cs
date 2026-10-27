@@ -12,6 +12,9 @@ internal class FakeInvoiceRepository : IInvoiceRepository
     public Invoice? GetById(string id) => _invoices.FirstOrDefault(i => i.Id == id);
     public IReadOnlyList<Invoice> GetByIds(IEnumerable<string> ids) => _invoices.Where(i => ids.Contains(i.Id)).ToList();
     public Invoice Add(Invoice invoice) { _invoices.Add(invoice); return invoice; }
-    public void Update(Invoice invoice) { }
+    /// <summary>Invoices passed to Update, in order, so tests can check that a change was saved.</summary>
+    public List<Invoice> Updated { get; } = new();
+
+    public void Update(Invoice invoice) => Updated.Add(invoice);
     public bool Remove(string id) => _invoices.RemoveAll(i => i.Id == id) > 0;
 }
