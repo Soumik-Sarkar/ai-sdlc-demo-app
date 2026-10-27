@@ -76,6 +76,13 @@ public class ApprovalServiceTests
         Assert.Throws<ArgumentException>(() => service.Reject("INV-1", "demo.manager", "  "));
     }
 
+    private static void AssertIsRecent(DateTime? timestamp)
+    {
+        Assert.NotNull(timestamp);
+        Assert.True(DateTime.UtcNow - timestamp!.Value < TimeSpan.FromMinutes(1));
+        Assert.True(timestamp.Value <= DateTime.UtcNow);
+    }
+
     private static Invoice PendingInvoice(decimal amount) =>
         new() { Id = "INV-1", CustomerName = "Test School", Amount = amount, Status = InvoiceStatus.PendingApproval };
 
@@ -115,11 +122,12 @@ public class ApprovalServiceTests
     {
         var invoice = PendingInvoice((decimal)amount);
         var before = Snapshot(invoice);
-        var service = ServiceFor(invoice);
+        var repository = new FakeInvoiceRepository(invoice);
 
-        Assert.Throws<ApprovalNotPermittedException>(() => service.Approve("INV-1", "someone", role));
+        Assert.Throws<ApprovalNotPermittedException>(() => new ApprovalService(repository).Approve("INV-1", "someone", role));
 
         Assert.Equal(before, Snapshot(invoice));
+        Assert.Empty(repository.Updated);
         Assert.Null(invoice.DecidedBy);
         Assert.Null(invoice.DecidedAt);
     }
@@ -165,7 +173,7 @@ public class ApprovalServiceTests
 
         Assert.Equal(InvoiceStatus.PendingApproval, result.Status);
         Assert.Equal("demo.first", result.FirstApprovedBy);
-        Assert.NotNull(result.FirstApprovedAt);
+        AssertIsRecent(result.FirstApprovedAt);
         Assert.Null(result.DecidedBy);
         Assert.Null(result.DecidedAt);
     }
@@ -180,8 +188,9 @@ public class ApprovalServiceTests
 
         Assert.Equal(InvoiceStatus.Approved, result.Status);
         Assert.Equal("demo.manager", result.FirstApprovedBy);
+        Assert.Equal(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc), result.FirstApprovedAt);
         Assert.Equal("demo.director", result.DecidedBy);
-        Assert.NotNull(result.DecidedAt);
+        AssertIsRecent(result.DecidedAt);
     }
 
     [Fact]
@@ -205,12 +214,14 @@ public class ApprovalServiceTests
     {
         var invoice = PendingInvoiceWithFirstApproval(750_000m, "demo.director");
         var before = Snapshot(invoice);
-        var service = ServiceFor(invoice);
+        var repository = new FakeInvoiceRepository(invoice);
 
-        var error = Assert.Throws<ApprovalNotPermittedException>(() => service.Approve("INV-1", approver, role));
+        var error = Assert.Throws<ApprovalNotPermittedException>(
+            () => new ApprovalService(repository).Approve("INV-1", approver, role));
 
         Assert.Contains("two different approvers", error.Message);
         Assert.Equal(before, Snapshot(invoice));
+        Assert.Empty(repository.Updated);
         Assert.Equal(InvoiceStatus.PendingApproval, invoice.Status);
     }
 
@@ -219,13 +230,14 @@ public class ApprovalServiceTests
     {
         var invoice = PendingInvoiceWithFirstApproval(750_000m, "demo.director");
         var before = Snapshot(invoice);
-        var service = ServiceFor(invoice);
+        var repository = new FakeInvoiceRepository(invoice);
 
         var error = Assert.Throws<ApprovalNotPermittedException>(
-            () => service.Approve("INV-1", "demo.manager", ApproverRoles.Manager));
+            () => new ApprovalService(repository).Approve("INV-1", "demo.manager", ApproverRoles.Manager));
 
         Assert.Contains("second approver must be a Director", error.Message);
         Assert.Equal(before, Snapshot(invoice));
+        Assert.Empty(repository.Updated);
     }
 
     [Fact]
