@@ -1,34 +1,34 @@
 # AI in SDLC assignment: approval limits by role
 
-**Video:** `<<< PASTE VIDEO LINK HERE >>>`  
-**Pull request:** `<<< PASTE PR LINK HERE >>>`
+**Pull request:** https://github.com/Soumik-Sarkar/ai-sdlc-demo-app/pull/<PR_NUMBER>
+**Demo video:** <VIDEO_LINK_PENDING> (to be added after recording)
 
 ## What was built
 
 Role-based approval limits in the invoice approval service:
 
-| Amount | Who may approve |
-| --- | --- |
-| up to 50,000 | Manager (or Director) |
-| up to 500,000 | Director |
+| Amount        | Who may approve                            |
+| ------------- | ------------------------------------------ |
+| up to 50,000  | Manager (or Director)                      |
+| up to 500,000 | Director                                   |
 | above 500,000 | two different users, the second a Director |
 
 A refused approval returns a plain-language reason (API: 403 `{ "error": "..." }`) and changes nothing on the invoice. Limits are inclusive; the assumptions I made (first approver may be Manager or Director, usernames compared case-insensitively, rejecting is not amount-limited) are listed in `openspec/changes/add-approval-limits-by-role/proposal.md`.
 
 ## How the work was done
 
-| Requirement | Where |
-| --- | --- |
-| Context file | `AGENTS.md`: approval rules table, layering, test and mutation commands, review expectations |
-| Skills | `agent-config/skills/approval-rules` (rules + the traps agents fall into), `review-pr` (fixed review format), `run-quality-gates` |
-| Hooks | `agent-config/settings.json` + `agent-config/hooks/`: `log-event.mjs` writes every prompt, tool call and subagent result to `logs/ai-interactions.jsonl` in one schema; `format-test-result.mjs` adds a fixed `TEST_RESULT runner= passed= failed= skipped=` line after test runs |
-| Spec-driven tool | OpenSpec 1.15.0: `openspec/changes/add-approval-limits-by-role/` (proposal, spec, design, tasks) |
-| Agents and sub-agents | `agent-config/agents/`: spec-writer, domain-implementer, test-writer, e2e-writer, reviewer (read-only), mutation-analyst. The independent review was run by a fresh agent that had not seen my reasoning |
-| Two-step implementation | Commit 3 = single-approver limits + tests; commit 4 = two-approver rule + tests |
-| Unit tests | `backend/tests/InvoiceApp.Tests/ApprovalPolicyTests.cs`, `ApprovalServiceTests.cs` (49 cases) |
-| Playwright | `e2e/tests/approval-limits.spec.ts` + page object `e2e/pages/InvoiceAppPage.ts` |
-| Review with verdicts | `docs/review/review-findings.md` and `docs/pull-request.md` |
-| AI log | `logs/ai-interactions.jsonl` |
+| Requirement             | Where                                                                                                                                                                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context file            | `AGENTS.md`: approval rules table, layering, test and mutation commands, review expectations                                                                                                                                                                                      |
+| Skills                  | `agent-config/skills/approval-rules` (rules + the traps agents fall into), `review-pr` (fixed review format), `run-quality-gates`                                                                                                                                                 |
+| Hooks                   | `agent-config/settings.json` + `agent-config/hooks/`: `log-event.mjs` is configured to append structured prompt, tool and subagent events to `logs/ai-interactions.jsonl`; `format-test-result.mjs` adds a fixed `TEST_RESULT runner= passed= failed= skipped=` line after test runs |
+| Spec-driven tool        | OpenSpec 1.15.0: `openspec/changes/add-approval-limits-by-role/` (proposal, spec, design, tasks)                                                                                                                                                                                  |
+| Agents and sub-agents   | `agent-config/agents/`: spec-writer, domain-implementer, test-writer, e2e-writer, reviewer (read-only), mutation-analyst. The independent review was run by a fresh agent that had not seen my reasoning                                                                          |
+| Two-step implementation | Commit 3 = single-approver limits + tests; commit 4 = two-approver rule + tests                                                                                                                                                                                                   |
+| Unit tests              | `backend/tests/InvoiceApp.Tests/ApprovalPolicyTests.cs`, `ApprovalServiceTests.cs` (49 cases)                                                                                                                                                                                     |
+| Playwright              | `e2e/tests/approval-limits.spec.ts` + page object `e2e/pages/InvoiceAppPage.ts`                                                                                                                                                                                                   |
+| Review with verdicts    | `docs/review/review-findings.md` and `docs/pull-request.md`                                                                                                                                                                                                                       |
+| AI log                  | `logs/ai-interactions.jsonl`                                                                                                                                                                                                                                                      |
 
 ### Commits
 
@@ -87,7 +87,7 @@ Agent, skill and hook definitions live in `agent-config/`. To activate them in a
 
 ## About the AI log
 
-`logs/ai-interactions.jsonl` is written by the hooks in `agent-config/settings.json` (`log-event.mjs`): one JSON line per prompt, tool call and agent result, always with the same fields (`ts, event, session_id, agent, tool, summary, detail`). The 15 entries in the file summarise the setup and build session and were written through the same logger script (`session_id: cloud-session-recap`); sessions run afterwards in this repository log live in the same format.
+`logs/ai-interactions.jsonl` is written by the hooks in `agent-config/settings.json` (`log-event.mjs`): one JSON line per prompt, tool call and agent result, always with the same fields (`ts, event, session_id, agent, tool, summary, detail`). The checked-in 15-entry file is a retrospective session recap recorded through the project logger (`session_id: cloud-session-recap`); it is not a verbatim transcript of every prompt and tool call. The hook configuration and logger are included for structured event capture in sessions where the assistant runs those hooks. Entries share the schema `ts, event, session_id, agent, tool, summary, detail`; summaries are concise and tool output is clipped. The file is append-only; do not rewrite historical entries.
 
 ## Known limits
 
