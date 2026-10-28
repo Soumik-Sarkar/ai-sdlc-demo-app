@@ -87,7 +87,7 @@ Agent, skill and hook definitions live in `agent-config/`. To activate them in a
 
 ## About the AI log
 
-`logs/ai-interactions.jsonl` is written by the hooks in `agent-config/settings.json` (`log-event.mjs`): one JSON line per prompt, tool call and agent result, always with the same fields (`ts, event, session_id, agent, tool, summary, detail`). The checked-in 15-entry file is a retrospective session recap recorded through the project logger (`session_id: cloud-session-recap`); it is not a verbatim transcript of every prompt and tool call. The hook configuration and logger are included for structured event capture in sessions where the assistant runs those hooks. Entries share the schema `ts, event, session_id, agent, tool, summary, detail`; summaries are concise and tool output is clipped. The file is append-only; do not rewrite historical entries.
+`logs/ai-interactions.jsonl` is written by the hooks in `agent-config/settings.json` (`log-event.mjs`): one JSON line per prompt, tool call and agent result, always with the same fields (`ts, event, session_id, agent, tool, summary, detail`). The checked-in 16-entry file contains a retrospective session recap plus a structured record of the PR hand-in action recorded through the project logger (`session_id: cloud-session-recap`); it is not a verbatim transcript of every prompt and tool call. The hook configuration and logger are included for structured event capture in sessions where the assistant runs those hooks. Entries share the schema `ts, event, session_id, agent, tool, summary, detail`; summaries are concise and tool output is clipped. The file is append-only; do not rewrite historical entries.
 
 ## Known limits
 
