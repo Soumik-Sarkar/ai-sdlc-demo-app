@@ -64,12 +64,12 @@ Controller (HTTP, reads role/username from session, no rules) -> `ApprovalServic
 - Every change is reviewed against the OpenSpec spec, not just for style. The review must name the rule each finding relates to.
 - Tests must be able to fail: for each rule there is a test that goes red if the rule is broken. Check boundaries (limit, limit + 0.01), both negative rules, and "nothing changed after refusal" (assert every field).
 - Reject tests that only assert `NotNull`, assert the mock, or repeat the implementation.
-- Review output uses the fixed format in `.claude/skills/review-pr/SKILL.md`. Every finding ends as `fixed`, `dismissed (reason)` or `deferred (reason)`.
+- Review output uses the fixed format in `agent-config/skills/review-pr/SKILL.md`. Every finding ends as `fixed`, `dismissed (reason)` or `deferred (reason)`.
 - Commits: one logical step each, message says what changed and why. Step 1 single-approver limits, step 2 two-approver rule.
 
 ## Agents, skills, hooks
 
-- Subagents in `.claude/agents/`: `spec-writer`, `domain-implementer`, `test-writer`, `e2e-writer`, `reviewer` (read-only), `mutation-analyst`.
-- Skills in `.claude/skills/`: `approval-rules`, `review-pr`, `run-quality-gates` (plus the OpenSpec skills).
-- Hooks in `.claude/settings.json` write every prompt, tool call and subagent result to `logs/ai-interactions.jsonl` in one fixed schema, and print test results in one fixed `TEST_RESULT` line.
+- Subagents in `agent-config/agents/`: `spec-writer`, `domain-implementer`, `test-writer`, `e2e-writer`, `reviewer` (read-only), `mutation-analyst`.
+- Skills in `agent-config/skills/`: `approval-rules`, `review-pr`, `run-quality-gates` (plus the OpenSpec skills).
+- Hooks in `agent-config/settings.json` write every prompt, tool call and subagent result to `logs/ai-interactions.jsonl` in one fixed schema, and print test results in one fixed `TEST_RESULT` line.
 - Do not hand-edit `logs/ai-interactions.jsonl`; it is append-only.

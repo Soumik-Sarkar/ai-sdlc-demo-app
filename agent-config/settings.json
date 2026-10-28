@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "node \"./agent-config/hooks/log-event.mjs\"" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Bash|Edit|Write", "hooks": [ { "type": "command", "command": "node \"./agent-config/hooks/log-event.mjs\"" } ] },
+      { "matcher": "Bash", "hooks": [ { "type": "command", "command": "node \"./agent-config/hooks/format-test-result.mjs\"" } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "node \"./agent-config/hooks/log-event.mjs\"" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "node \"./agent-config/hooks/log-event.mjs\"" } ] }
+    ]
+  }
+}

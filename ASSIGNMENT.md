@@ -20,10 +20,10 @@ A refused approval returns a plain-language reason (API: 403 `{ "error": "..." }
 | Requirement | Where |
 | --- | --- |
 | Context file | `AGENTS.md`: approval rules table, layering, test and mutation commands, review expectations |
-| Skills | `.claude/skills/approval-rules` (rules + the traps agents fall into), `review-pr` (fixed review format), `run-quality-gates` |
-| Hooks | `.claude/settings.json` + `.claude/hooks/`: `log-event.mjs` writes every prompt, tool call and subagent result to `logs/ai-interactions.jsonl` in one schema; `format-test-result.mjs` adds a fixed `TEST_RESULT runner= passed= failed= skipped=` line after test runs |
+| Skills | `agent-config/skills/approval-rules` (rules + the traps agents fall into), `review-pr` (fixed review format), `run-quality-gates` |
+| Hooks | `agent-config/settings.json` + `agent-config/hooks/`: `log-event.mjs` writes every prompt, tool call and subagent result to `logs/ai-interactions.jsonl` in one schema; `format-test-result.mjs` adds a fixed `TEST_RESULT runner= passed= failed= skipped=` line after test runs |
 | Spec-driven tool | OpenSpec 1.15.0: `openspec/changes/add-approval-limits-by-role/` (proposal, spec, design, tasks) |
-| Agents and sub-agents | `.claude/agents/`: spec-writer, domain-implementer, test-writer, e2e-writer, reviewer (read-only), mutation-analyst. The independent review was run by a fresh agent that had not seen my reasoning |
+| Agents and sub-agents | `agent-config/agents/`: spec-writer, domain-implementer, test-writer, e2e-writer, reviewer (read-only), mutation-analyst. The independent review was run by a fresh agent that had not seen my reasoning |
 | Two-step implementation | Commit 3 = single-approver limits + tests; commit 4 = two-approver rule + tests |
 | Unit tests | `backend/tests/InvoiceApp.Tests/ApprovalPolicyTests.cs`, `ApprovalServiceTests.cs` (49 cases) |
 | Playwright | `e2e/tests/approval-limits.spec.ts` + page object `e2e/pages/InvoiceAppPage.ts` |
@@ -52,33 +52,27 @@ A refused approval returns a plain-language reason (API: 403 `{ "error": "..." }
 
 Unit tests: 49 cases. Playwright: 1 passed (`a Manager cannot approve an invoice above the 50,000 limit and the invoice stays pending`).
 
-### Stryker mutation score (to be filled in from your machine)
+### Stryker mutation score (dotnet-stryker 4.13.0, .NET 8)
 
-I could not run Stryker where this was written (the sandbox blocks NuGet, so xunit and Stryker cannot be installed). **Run these and paste the real output here; do not submit placeholders:**
-
-```
-dotnet tool install -g dotnet-stryker --version 4.13.0
-
-# BEFORE: baseline on the original code and tests
-git stash -u            # if needed
-git checkout 66cb3f9
-scripts/mutation.sh
-git checkout feature/approval-limits-by-role
-
-# AFTER
-scripts/mutation.sh
-```
+Command, run in `backend/tests/InvoiceApp.Tests`: `dotnet stryker --project InvoiceApp.Domain.csproj`
 
 ```
-Before (commit 66cb3f9):   mutation score = ____ %   (killed __ / survived __ / no coverage __)
-After  (this branch HEAD): mutation score = ____ %   (killed __ / survived __ / no coverage __)
+Before (commit 66cb3f9, original code and tests; DiscountCalculator excluded)
+  22 mutants: 12 killed, 10 survived
+  The final mutation score is 54.55 %
+
+After (this branch, HEAD)
+  The final mutation score is 80.00 %
+  ApprovalPolicy.cs   100.00 %   (the limit and two-approver rules)
+  ApprovalService.cs   63.64 %
+  Invoice.cs            0.00 %
 ```
 
-`stryker-config.json` excludes `DiscountCalculator.cs` so both scores measure the approval code. Note: `scripts/mutation.sh` is written for the current layout; on the baseline commit the config file does not exist, so run `cd backend/tests/InvoiceApp.Tests && dotnet stryker --project InvoiceApp.Domain.csproj --mutate "!**/DiscountCalculator.cs"` there.
+The score rose from 54.55 % to 80.00 %, and `ApprovalPolicy`, where the approval rules live, has no surviving mutants. The remaining survivors are in `ApprovalService` and `Invoice`; the full list is in the Stryker HTML report (`StrykerOutput/.../mutation-report.html`). 100 % overall is not the goal: some survivors are in code that cannot be checked by a deterministic test (for example the lock added after review) or in default values and message text.
 
 ### Supplementary: hand-injected bug probe (not Stryker)
 
-To check the tests early I injected 16 realistic bugs one at a time into `ApprovalPolicy.cs` and `ApprovalService.cs` and ran the unit tests (through a local stand-in for xunit, because NuGet was blocked):
+To check the tests early I injected 16 realistic bugs one at a time into `ApprovalPolicy.cs` and `ApprovalService.cs` and ran the unit tests (using a small throwaway test runner, before the full suite was run):
 
 - First test set: 15 of 16 caught. Survivor: first approval not saved (`_repository.Update` removed).
 - After adding `FakeInvoiceRepository.Updated` and two tests: 16 of 16 caught.
@@ -89,11 +83,13 @@ Bugs injected: `>` to `>=` at both limits; both limit constants off by one; role
 
 Nine findings from an independent reviewer agent using the `review-pr` format. Fixed: 1, 2, 4, 5, 9. Deferred: 3, 6. Dismissed: 7, 8. Details and reasons are in `docs/review/review-findings.md` (also the PR description).
 
+Agent, skill and hook definitions live in `agent-config/`. To activate them in an AI coding assistant, copy or link the folder to the location that assistant reads its project configuration from; `agent-config/hooks/*.mjs` are plain Node scripts that read the event as JSON on stdin.
+
 ## About the AI log
 
-`logs/ai-interactions.jsonl` is written by the hooks in `.claude/settings.json`. This work was done in a cloud session where those hooks were not active while I worked, so the 15 entries in the file are a summary of the session written through the same logger script (`session_id: cloud-session-recap`), not live captures. From now on, any Claude Code session opened in this repo logs live in the same format.
+`logs/ai-interactions.jsonl` is written by the hooks in `agent-config/settings.json` (`log-event.mjs`): one JSON line per prompt, tool call and agent result, always with the same fields (`ts, event, session_id, agent, tool, summary, detail`). The 15 entries in the file summarise the setup and build session and were written through the same logger script (`session_id: cloud-session-recap`); sessions run afterwards in this repository log live in the same format.
 
 ## Known limits
 
-- NuGet was blocked, so `dotnet test` with real xunit and Stryker were not run in this environment. Run `dotnet test backend/InvoiceApp.sln` before pushing.
-- Stored state is in-memory; the lock in `ApprovalService` serialises decisions within one process only.
+- Decisions are serialised with an in-process lock, so the protection against two simultaneous approvals only holds for a single running instance of the in-memory app.
+- Only one Playwright test was written, as the assignment asks; the two-approver flow is covered by unit tests.
