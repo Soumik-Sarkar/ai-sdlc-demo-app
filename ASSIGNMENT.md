@@ -1,7 +1,7 @@
 # AI in SDLC assignment: approval limits by role
 
 **Pull request:** https://github.com/Soumik-Sarkar/ai-sdlc-demo-app/pull/1
-**Demo video:** <VIDEO_LINK_PENDING> (to be added after recording)
+**Demo video:** https://nagarro-my.sharepoint.com/:v:/p/soumik_sarkar/IQASSsoRpxMqTLrkhMoleYhZATBGJ2zgnkitlPqibuEPp7g?e=LFuGeJ
 
 ## What was built
 
@@ -17,17 +17,18 @@ A refused approval returns a plain-language reason (API: 403 `{ "error": "..." }
 
 ## How the work was done
 
-| Requirement             | Where                                                                                                                                                                                                                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Context file            | `AGENTS.md`: approval rules table, layering, test and mutation commands, review expectations                                                                                                                                                                                      |
-| Skills                  | `agent-config/skills/approval-rules` (rules + the traps agents fall into), `review-pr` (fixed review format), `run-quality-gates`                                                                                                                                                 |
-| Hooks                   | `agent-config/settings.json` + `agent-config/hooks/`: structured JSONL logger with clipping, common credential redaction, and line-safe appends; test-result hook emits a fixed `TEST_RESULT` line |
-| Spec-driven tool        | OpenSpec 1.15.0: `openspec/changes/add-approval-limits-by-role/` (proposal, spec, design, tasks)                                                                                                                                                                                  |
-| Agents and sub-agents   | `agent-config/agents/`: spec-writer, domain-implementer, test-writer, e2e-writer, reviewer (read-only), mutation-analyst. The independent review was run by a fresh agent that had not seen my reasoning                                                                          |
-| Two-step implementation | Commit 3 = single-approver limits + tests; commit 4 = two-approver rule + tests                                                                                                                                                                                                   |
-| Unit tests              | `backend/tests/InvoiceApp.Tests/ApprovalPolicyTests.cs`, `ApprovalServiceTests.cs` (49 cases)                                                                                                                                                                                     |
-| Playwright              | `e2e/tests/approval-limits.spec.ts` + page object `e2e/pages/InvoiceAppPage.ts`                                                                                                                                                                                                   |
-| Review with verdicts    | `docs/review/review-findings.md` and `docs/pull-request.md`                                                                                                                                                                                                                       |
+| Requirement             | Where                                                                                                                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Context file            | `AGENTS.md`: approval rules table, layering, test and mutation commands, review expectations                                                                                                             |
+| Skills                  | `agent-config/skills/approval-rules` (rules + the traps agents fall into), `review-pr` (fixed review format), `run-quality-gates`                                                                        |
+| Hooks                   | `agent-config/settings.json` + `agent-config/hooks/`: structured JSONL logger with clipping, common credential redaction, and line-safe appends; test-result hook emits a fixed `TEST_RESULT` line       |
+| Spec-driven tool        | OpenSpec 1.15.0: `openspec/changes/add-approval-limits-by-role/` (proposal, spec, design, tasks)                                                                                                         |
+| Agents and sub-agents   | `agent-config/agents/`: spec-writer, domain-implementer, test-writer, e2e-writer, reviewer (read-only), mutation-analyst. The independent review was run by a fresh agent that had not seen my reasoning |
+| Two-step implementation | Commit 3 = single-approver limits + tests; commit 4 = two-approver rule + tests                                                                                                                          |
+| Unit tests              | `backend/tests/InvoiceApp.Tests/ApprovalPolicyTests.cs`, `ApprovalServiceTests.cs` (49 cases)                                                                                                            |
+| Playwright              | `e2e/tests/approval-limits.spec.ts` + page object `e2e/pages/InvoiceAppPage.ts`                                                                                                                          |
+| Review with verdicts    | `docs/review/review-findings.md` and `docs/pull-request.md`                                                                                                                                              |
+
 `logs/ai-interactions.jsonl` uses a fixed schema: `ts, event, session_id, agent, tool, summary, detail`. The 17 records contain a 15-event retrospective recap, a PR action record, and a log-maintenance record. The recap is summarized rather than a verbatim transcript, so it does not document every interaction. The logger clips and normalizes text, redacts common credential fields, and ensures future appends start on a separate JSONL line.
 
 ### Commits
