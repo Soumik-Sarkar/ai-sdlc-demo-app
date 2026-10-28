@@ -1,6 +1,6 @@
 # AI in SDLC assignment: approval limits by role
 
-**Pull request:** https://github.com/Soumik-Sarkar/ai-sdlc-demo-app/pull/<PR_NUMBER>
+**Pull request:** https://github.com/Soumik-Sarkar/ai-sdlc-demo-app/pull/1
 **Demo video:** <VIDEO_LINK_PENDING> (to be added after recording)
 
 ## What was built
